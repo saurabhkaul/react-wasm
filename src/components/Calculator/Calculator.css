@@ -1,0 +1,127 @@
+/* src/components/Calculator.css */
+.calculator-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 20px;
+}
+
+.calculator {
+    width: 100%;
+    max-width: 400px;
+    background: white;
+    padding: 2rem;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.calculator-title {
+    color: #2d3748;
+    font-size: 1.8rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.calculator-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.input-group {
+    width: 100%;
+}
+
+.expression-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.expression-input:focus {
+    outline: none;
+    border-color: #4299e1;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+}
+
+.button {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.button:focus {
+    outline: none;
+}
+
+.button-primary {
+    background-color: #4299e1;
+    color: white;
+}
+
+.button-primary:hover {
+    background-color: #3182ce;
+    transform: translateY(-1px);
+}
+
+.button-primary:active {
+    transform: translateY(0);
+}
+
+.button-secondary {
+    background-color: #718096;
+    color: white;
+}
+
+.button-secondary:hover {
+    background-color: #4a5568;
+    transform: translateY(-1px);
+}
+
+.button-secondary:active {
+    transform: translateY(0);
+}
+
+.error-message {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background-color: #fff5f5;
+    color: #e53e3e;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.875rem;
+}
+
+.result {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #f7fafc;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.loading {
+    color: #4a5568;
+    font-size: 1.25rem;
+    font-weight: 500;
+    text-align: center;
+}
