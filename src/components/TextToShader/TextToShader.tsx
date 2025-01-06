@@ -1,7 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
+//ignoring since this lib doesnt have types
+// @ts-ignore
+import GlslCanvas from 'glslCanvas';
 import './TextToShader.css';
 
 const WEB_GL_API_HOST = process.env.REACT_APP_API ? process.env.REACT_APP_API : "http://localhost:4000";
+
+
+// Default shader with basic animation
+const defaultShader = `
+        #ifdef GL_ES
+        precision mediump float;
+        #endif
+
+        uniform vec2 u_resolution;
+        uniform float u_time;
+
+        void main() {
+            vec2 uv = gl_FragCoord.xy/u_resolution.xy;
+            gl_FragColor = vec4(uv.x, uv.y, 0.5 + 0.5 * sin(u_time), 1.0);
+        }
+    `;
+
 
 
 const TextToShader = () => {
@@ -10,8 +30,29 @@ const TextToShader = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const sandboxRef = useRef<GlslCanvas | null>(null);
 
-    // Handle shader generation
+
+
+    useEffect(() => {
+        if (!canvasRef.current) return;
+
+        // Initialize GlslCanvas
+        const sandbox = new GlslCanvas(canvasRef.current);
+        sandboxRef.current = sandbox;
+
+        // Set initial shader
+        sandbox.load(defaultShader);
+        setShaderCode(defaultShader);
+
+        // Clean up
+        return () => {
+            if (sandboxRef.current) {
+                sandboxRef.current.destroy();
+            }
+        };
+    },[defaultShader]);
+
     const handleGenerateShader = async () => {
         setIsLoading(true);
         setError('');
@@ -30,9 +71,28 @@ const TextToShader = () => {
             }
 
             const data = await response.json();
-            let shaderCode = data.shader_code[0].text;
-            setShaderCode(shaderCode);
-            initShader(shaderCode);
+            const code = data.shader_code[0].text;
+
+            // Add precision qualifier if it's missing
+            const finalCode = code.includes('precision')
+                ? code
+                : `#ifdef GL_ES\nprecision mediump float;\n#endif\n\n${code}`;
+
+            try {
+                // Try to load the new shader
+                if (sandboxRef.current) {
+                    sandboxRef.current.load(finalCode);
+                    setShaderCode(finalCode);
+                    setError('');
+                }
+            } catch (shaderError) {
+                console.error('Shader compilation error:', shaderError);
+                setError('Failed to compile shader');
+                // Revert to default shader
+                if (sandboxRef.current) {
+                    sandboxRef.current.load(defaultShader);
+                }
+            }
         } catch (err) {
             setError('Failed to generate shader');
             console.error('Shader generation error:', err);
@@ -41,116 +101,13 @@ const TextToShader = () => {
         }
     };
 
-
-    const createShader = (gl: WebGLRenderingContext, type: number, source: string) => {
-        const shader = gl.createShader(type);
-        if (!shader) {
-            setError('Failed to create shader');
-            return null;
-        }
-
-        gl.shaderSource(shader, source);
-        gl.compileShader(shader);
-
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            const info = gl.getShaderInfoLog(shader);
-            setError(`Shader compilation error: ${info}`);
-            gl.deleteShader(shader);
-            return null;
-        }
-
-        return shader;
-    };
-
-    const initShader = (fragmentShaderSource: string) => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const gl = canvas.getContext('webgl');
-        if (!gl) {
-            setError('WebGL not supported');
-            return;
-        }
-
-        // Clear any previous errors
-        setError('');
-
-        // Vertex shader source
-        const vertexShaderSource = `
-            attribute vec4 position;
-            void main() {
-                gl_Position = position;
-            }`;
-
-        // Create shaders
-        const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-        const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-
-        if (!vertexShader || !fragmentShader) {
-            return; // Error already set by createShader
-        }
-
-        // Create program
-        const program = gl.createProgram();
-        if (!program) {
-            setError('Failed to create shader program');
-            return;
-        }
-
-        gl.attachShader(program, vertexShader);
-        gl.attachShader(program, fragmentShader);
-        gl.linkProgram(program);
-
-        // Check if linking succeeded
-        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-            const info = gl.getProgramInfoLog(program);
-            setError(`Program link error: ${info}`);
-            gl.deleteProgram(program);
-            gl.deleteShader(vertexShader);
-            gl.deleteShader(fragmentShader);
-            return;
-        }
-
-        gl.useProgram(program);
-
-        // Create buffer for full-screen quad
-        const buffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        gl.bufferData(
-            gl.ARRAY_BUFFER,
-            new Float32Array([
-                -1, -1,
-                1, -1,
-                -1,  1,
-                1,  1
-            ]),
-            gl.STATIC_DRAW
-        );
-
-        // Set up attribute
-        const positionLocation = gl.getAttribLocation(program, 'position');
-        gl.enableVertexAttribArray(positionLocation);
-        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-
-        // Clear canvas
-        gl.clearColor(0, 0, 0, 1);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-
-        // Draw
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-
-        // Cleanup
-        gl.deleteShader(vertexShader);
-        gl.deleteShader(fragmentShader);
-    };
-
     return (
         <div className="text-to-shader">
             <div className="shader-input">
                 <textarea
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="Describe the shader you want (e.g., 'A rotating cube with a gradient background')"
+                    placeholder="Describe the shader you want (e.g., 'A colorful gradient that changes with time')"
                     className="shader-prompt"
                 />
                 <button
@@ -168,11 +125,14 @@ const TextToShader = () => {
                         ref={canvasRef}
                         width={800}
                         height={600}
-                        className="shader-canvas"
                     />
                 </div>
 
-                {error && <div className="error-message">{error}</div>}
+                {error && (
+                    <div className="error-message">
+                        {error}
+                    </div>
+                )}
 
                 {shaderCode && (
                     <div className="code-container">
@@ -184,5 +144,6 @@ const TextToShader = () => {
         </div>
     );
 };
+
 
 export default TextToShader;
