@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for react-wasm-divine-breeze-8773 on 2025-01-06T16:31:28+05:30
+# fly.toml app configuration file generated for react-wasm-holy-violet-8070 on 2025-01-06T16:45:29+05:30
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'react-wasm-divine-breeze-8773'
+app = 'react-wasm-holy-violet-8070'
 primary_region = 'bom'
 
 [build]
