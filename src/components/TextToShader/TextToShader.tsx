@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './TextToShader.css';
 
-const WEB_GL_API = process.env.NODE_ENV === "production" ? "https://webgl-api.fly.dev" : "http://localhost:4000";
+const WEB_GL_API_HOST = process.env.REACT_APP_API ? process.env.REACT_APP_API : "http://localhost:4000";
 
 
 const TextToShader = () => {
@@ -17,7 +17,7 @@ const TextToShader = () => {
         setError('');
 
         try {
-            const response = await fetch(`${WEB_GL_API}/api/generate-shader`, {
+            const response = await fetch(`${WEB_GL_API_HOST}/api/generate-shader`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
