@@ -43,6 +43,7 @@
     ]
   },
   "devDependencies": {
-    "ajv": "^7.2.4"
+    "@flydotio/dockerfile": "^0.5.9",
+    "ajv": "^8.17.1"
   }
 }
