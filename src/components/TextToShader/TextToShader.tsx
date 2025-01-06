@@ -17,7 +17,7 @@ const TextToShader = () => {
         setError('');
 
         try {
-            const response = await fetch(`{WEB_GL_API}/api/generate-shader`, {
+            const response = await fetch(`${WEB_GL_API}/api/generate-shader`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
