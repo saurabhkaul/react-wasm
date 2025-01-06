@@ -13,6 +13,32 @@ WORKDIR /app
 ENV NODE_ENV="production"
 
 
+
+# Stage 1: Build Rust WASM
+FROM rust:1.83 as wasm-builder
+
+# Install wasm-pack
+#RUN curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create and set working directory for Rust WASM
+WORKDIR /usr/src/wasm-lib
+
+# Copy Rust project files
+COPY wasm-lib/Cargo.toml wasm-lib/Cargo.lock ./
+COPY wasm-lib/src ./src
+
+RUN cargo install wasm-pack
+
+RUN wasm-pack build --target web --out-dir pkg
+
+
+
 # Throw-away build stage to reduce size of final image
 FROM base as build
 
@@ -27,8 +53,11 @@ RUN npm ci --include=dev
 # Copy application code
 COPY . .
 
+#COPY --from=wasm-builder /usr/src/wasm-lib/pkg ./src/wasm-lib
 
-RUN npm run build:wasm
+
+COPY --from=wasm-builder /usr/src/wasm-lib/pkg ./src/wasm-lib/pkg
+
 # Build application
 RUN npm run build
 
