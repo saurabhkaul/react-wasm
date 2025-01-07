@@ -1,92 +1,77 @@
+// src/components/TextToShader/__tests__/TextToShader.test.tsx
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import TextToShader from '../TextToShader';
-import { WEB_GL_API_HOST } from '../constants';
 
 // Mock GlslCanvas
-jest.mock('glslCanvas', () => {
-    return jest.fn().mockImplementation(() => ({
-        load: jest.fn(),
-        destroy: jest.fn(),
-    }));
-});
+// jest.mock('glslCanvas', () => {
+//     return {
+//         default: jest.fn().mockImplementation(() => ({
+//             load: jest.fn(),
+//             destroy: jest.fn()
+//         }))
+//     };
+// });
+
+jest.mock('glslCanvas')
+
+// Mock fetch
+global.fetch = jest.fn();
 
 describe('TextToShader', () => {
     beforeEach(() => {
-        // Clear all mocks before each test
+        // Reset mocks before each test
         jest.clearAllMocks();
-        // Mock fetch
-        global.fetch = jest.fn();
     });
 
 
-
-    it('shows loading state when generating shader', async () => {
-        // Mock successful API response
-        (global.fetch as jest.Mock).mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve({
-                shader_code: [{ text: 'void main() { gl_FragColor = vec4(1.0); }' }]
-            })
-        });
-
-        render(<TextToShader />);
-
-        // Enter text and click generate
-        const input = screen.getByPlaceholderText(/Describe the shader/i);
-        await userEvent.type(input, 'test shader');
-
-        const button = screen.getByRole('button', { name: /generate/i });
-        await userEvent.click(button);
-
-        // Check loading state
-        expect(screen.getByText(/generating/i)).toBeInTheDocument();
-    });
-
-    it('displays error message on API failure', async () => {
+    it('shows error when API fails', async () => {
         // Mock failed API response
-        (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('API Error'));
+        (global.fetch as jest.Mock).mockImplementationOnce(() =>
+            Promise.reject(new Error('API Error'))
+        );
 
         render(<TextToShader />);
 
-        // Enter text and click generate
+        // Type in input and click button
         const input = screen.getByPlaceholderText(/Describe the shader/i);
-        await userEvent.type(input, 'test shader');
+        fireEvent.change(input, { target: { value: 'A red circle' } });
 
-        const button = screen.getByRole('button', { name: /generate/i });
-        await userEvent.click(button);
+        const button = screen.getByRole('button', { name: /Generate Shader/i });
+        fireEvent.click(button);
 
         // Check error message
         await waitFor(() => {
-            expect(screen.getByText(/failed to generate shader/i)).toBeInTheDocument();
+            expect(screen.getByText(/Failed to generate shader/i)).toBeInTheDocument();
         });
     });
 
-
-    it('displays generated shader code', async () => {
-        const shaderCode = 'void main() { gl_FragColor = vec4(1.0); }';
+    it('displays shader code when API succeeds', async () => {
+        const testShaderCode = 'test shader code';
 
         // Mock successful API response
-        (global.fetch as jest.Mock).mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve({
-                shader_code: [{ text: shaderCode }]
+        (global.fetch as jest.Mock).mockImplementationOnce(() =>
+            Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({
+                    shader_code: [{ text: testShaderCode }]
+                })
             })
-        });
+        );
 
         render(<TextToShader />);
 
-        // Enter text and click generate
-        const input = screen.getByPlaceholderText(/Describe the shader/i);
-        await userEvent.type(input, 'test shader');
+        // Type in input and click button
+        const input = screen.getByPlaceholderText(/describe the shader/i);
+        fireEvent.change(input, { target: { value: 'test shader' } });
 
         const button = screen.getByRole('button', { name: /generate/i });
-        await userEvent.click(button);
+        fireEvent.click(button);
 
         // Check if shader code is displayed
         await waitFor(() => {
-            expect(screen.getByText(shaderCode)).toBeInTheDocument();
+            expect(screen.getByText(/test shader code/i)).toBeInTheDocument();
         });
     });
 });

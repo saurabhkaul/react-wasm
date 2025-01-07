@@ -70,7 +70,7 @@ const TextToShader = () => {
                     setError('');
                 }
             } catch (shaderError) {
-                console.error('Shader compilation error:', shaderError);
+                // console.error('Shader compilation error:', shaderError);
                 setError('Failed to compile shader');
                 // Revert to default shader
                 if (sandboxRef.current) {
@@ -79,7 +79,7 @@ const TextToShader = () => {
             }
         } catch (err) {
             setError('Failed to generate shader');
-            console.error('Shader generation error:', err);
+            // console.error('Shader generation error:', err);
         } finally {
             setIsLoading(false);
         }
