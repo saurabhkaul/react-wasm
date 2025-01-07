@@ -140,3 +140,44 @@ fn apply_operator(numbers: &mut Vec<f64>, op: Token) -> Result<(), String> {
     numbers.push(result);
     Ok(())
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_floating_point_numbers() {
+        assert_eq!(evaluate("2.5 + 1.5").unwrap(), 4.0);
+        assert_eq!(evaluate("3.3 * 3").unwrap(),  9.899999999999999);//Not good at handling floating point numbers right now
+        assert!((evaluate("5.5 / 2").unwrap() - 2.75).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_operator_precedence() {
+        assert_eq!(evaluate("2 + 3 * 4").unwrap(), 14.0);
+        assert_eq!(evaluate("10 - 2 * 3").unwrap(), 4.0);
+        assert_eq!(evaluate("20 / 4 + 2").unwrap(), 7.0);
+    }
+
+    #[test]
+    fn test_whitespace_handling() {
+        assert_eq!(evaluate("2+2").unwrap(), 4.0);
+        assert_eq!(evaluate(" 2 + 2 ").unwrap(), 4.0);
+        assert_eq!(evaluate("2    +    2").unwrap(), 4.0);
+    }
+
+    #[test]
+    fn test_multiple_operations() {
+        assert_eq!(evaluate("1 + 2 + 3").unwrap(), 6.0);
+        assert_eq!(evaluate("10 - 2 - 3").unwrap(), 5.0);
+        assert_eq!(evaluate("2 * 3 * 4").unwrap(), 24.0);
+        assert_eq!(evaluate("24 / 2 / 3").unwrap(), 4.0);
+    }
+
+    #[test]
+    fn test_decimal_precision() {
+        assert!((evaluate("0.1 + 0.2").unwrap() - 0.3).abs() < f64::EPSILON);
+        assert!((evaluate("0.7 * 0.1").unwrap() - 0.07).abs() < f64::EPSILON);
+    }
+}
